@@ -1,0 +1,3 @@
+Model,Metric,Value
+Random Forest Regression,RMSE,6.88%
+Random Forest Classification,Accuracy,0.917

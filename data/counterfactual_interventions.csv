@@ -1,0 +1,10 @@
+State,Current_Prevalence,Intervention,Current_Value,Suggested_Value,Change_Direction
+Zamfara,37.0,itn_coverage_gap_2021,22.0,12.0,Reduce
+Zamfara,37.0,itn_ownership_2021,66.0,76.0,Increase
+Zamfara,37.0,iptp_coverage_gap_2021,4.0,0.0,Reduce
+Sokoto,36.0,itn_coverage_gap_2021,25.0,15.0,Reduce
+Sokoto,36.0,itn_ownership_2021,69.0,79.0,Increase
+Sokoto,36.0,iptp_coverage_gap_2021,14.0,4.0,Reduce
+Bauchi,32.0,itn_coverage_gap_2021,19.0,9.0,Reduce
+Bauchi,32.0,itn_ownership_2021,73.0,83.0,Increase
+Bauchi,32.0,iptp_coverage_gap_2021,10.0,0.0,Reduce

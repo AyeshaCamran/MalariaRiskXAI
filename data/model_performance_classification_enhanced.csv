@@ -1,0 +1,5 @@
+,Accuracy,Precision,Recall,F1-Score,ROC-AUC
+Random Forest,1.0,1.0,1.0,1.0,
+MLP Neural Network,1.0,1.0,1.0,1.0,
+Stacking Ensemble,1.0,1.0,1.0,1.0,
+Logistic Regression,0.875,1.0,0.875,0.9333333333333333,

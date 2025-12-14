@@ -1,0 +1,38 @@
+State,Zone,malaria_prev_2021,neighbor_malaria_avg_2021,spatial_diff,clustering
+Abia,South East,15.0,21.0,-6.0,Low-Low
+Adamawa,North East,11.0,15.75,-4.75,Mixed
+Akwa Ibom,South South,30.0,16.0,14.0,High-High
+Anambra,South East,5.0,16.5,-11.5,Low-Low
+Bauchi,North East,32.0,19.5,12.5,High-High
+Bayelsa,South South,17.0,9.5,7.5,High-High
+Benue,North Central,18.0,20.5,-2.5,Mixed
+Borno,North East,6.0,16.666666666666668,-10.666666666666668,Low-Low
+Cross River,South South,24.0,24.666666666666668,-0.6666666666666679,Mixed
+Delta,South South,10.0,15.25,-5.25,Low-Low
+Ebonyi,South East,26.0,20.25,5.75,High-High
+Edo,South South,23.0,17.666666666666668,5.333333333333332,High-High
+Ekiti,South West,21.0,20.666666666666668,0.33333333333333215,Mixed
+Enugu,South East,24.0,16.0,8.0,High-High
+FCT Abuja,North Central,19.0,17.333333333333332,1.6666666666666679,Mixed
+Gombe,North East,18.0,17.6,0.3999999999999986,Mixed
+Imo,South East,16.0,12.6,3.4000000000000004,Mixed
+Jigawa,North West,25.0,23.75,1.25,Mixed
+Kaduna,North West,16.0,27.0,-11.0,Low-Low
+Kano,North West,26.0,23.33333333333333,2.6666666666666714,Mixed
+Katsina,North West,29.0,28.75,0.25,Mixed
+Kebbi,North West,49.0,31.33333333333333,17.66666666666667,High-High
+Kogi,North Central,16.0,16.88888888888889,-0.8888888888888893,Mixed
+Kwara,North Central,6.0,19.33333333333333,-13.333333333333329,Low-Low
+Lagos,South West,3.0,25.0,-22.0,Low-Low
+Nasarawa,North Central,15.0,18.0,-3.0,Mixed
+Niger,North Central,21.0,25.4,-4.399999999999999,Mixed
+Ogun,South West,25.0,17.5,7.5,High-High
+Ondo,South West,27.0,22.0,5.0,Mixed
+Osun,South West,19.0,23.5,-4.5,Mixed
+Oyo,South West,21.0,16.5,4.5,Mixed
+Plateau,North Central,19.0,20.25,-1.25,Mixed
+Rivers,South South,9.0,19.5,-10.5,Low-Low
+Sokoto,North West,36.0,38.333333333333336,-2.3333333333333357,Mixed
+Taraba,North East,18.0,18.83333333333333,-0.8333333333333286,Mixed
+Yobe,North East,21.0,20.25,0.75,Mixed
+Zamfara,North West,37.0,30.2,6.800000000000001,High-High

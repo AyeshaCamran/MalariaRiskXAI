@@ -1,0 +1,7 @@
+State,Risk,Prevalence,Top_Feature,Top_Weight
+Kebbi,High,49.0,malaria_prev_2018,-0.06374752039491029
+Zamfara,Medium,37.0,malaria_prev_2018,-0.06148491243382384
+Sokoto,Medium,36.0,malaria_prev_2018,-0.0592566368019416
+Bauchi,Medium,32.0,anaemia_trend_2015_2021,0.06532018417812199
+Lagos,Low,3.0,malaria_prev_2018,0.13292844254345001
+Anambra,Low,5.0,malaria_prev_2018,0.13519846079239237
