@@ -21,8 +21,9 @@ import plotly.figure_factory as ff
 
 from sklearn.metrics import (
     confusion_matrix, roc_curve, auc, precision_recall_curve,
-    calibration_curve, mean_squared_error, r2_score
+    mean_squared_error, r2_score
 )
+from sklearn.calibration import calibration_curve
 from sklearn.model_selection import learning_curve, StratifiedKFold
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -825,7 +826,7 @@ def create_lime_comparison(data):
 
     fig.add_trace(go.Bar(
         y=shap_importance['Feature'].apply(lambda x: x.replace('_', ' ').title()),
-        x=shap_importance['Mean_SHAP'],
+        x=shap_importance['SHAP_Importance'],
         orientation='h',
         name='SHAP Importance',
         marker_color='#1976D2',
@@ -1024,8 +1025,8 @@ def create_multilayer_choropleth(data):
     # Layer 2: ITN Coverage
     fig.add_trace(go.Bar(
         x=df['State'],
-        y=df['itn_2021'],
-        marker_color=df['itn_2021'],
+        y=df['itn_ownership_2021'],
+        marker_color=df['itn_ownership_2021'],
         marker=dict(colorscale='Greens', showscale=False),
         name='ITN',
         hovertemplate='<b>%{x}</b><br>ITN: %{y:.1f}%<extra></extra>'
@@ -1034,15 +1035,16 @@ def create_multilayer_choropleth(data):
     # Layer 3: IPTp Coverage
     fig.add_trace(go.Bar(
         x=df['State'],
-        y=df['iptp2_2021'],
-        marker_color=df['iptp2_2021'],
+        y=df.get('iptp2_2021', df.get('iptp_2021', 0)),
+        marker_color=df.get('iptp2_2021', df.get('iptp_2021', 0)),
         marker=dict(colorscale='Blues', showscale=False),
         name='IPTp2',
         hovertemplate='<b>%{x}</b><br>IPTp2: %{y:.1f}%<extra></extra>'
     ), row=2, col=1)
 
     # Layer 4: Intervention Gap
-    df['intervention_gap'] = (100 - df['itn_2021']) + (100 - df['iptp2_2021'])
+    iptp_col = 'iptp2_2021' if 'iptp2_2021' in df.columns else 'iptp_2021'
+    df['intervention_gap'] = (100 - df['itn_ownership_2021']) + (100 - df[iptp_col])
     fig.add_trace(go.Bar(
         x=df['State'],
         y=df['intervention_gap'],
@@ -1190,8 +1192,24 @@ def create_national_trends(data):
     # Calculate national averages
     years = [2015, 2018, 2021]
     prevalence_avg = [df[f'malaria_prev_{year}'].mean() for year in years]
-    itn_avg = [df[f'itn_ownership_{year}'].mean() for year in years]
-    iptp_avg = [df[f'iptp2_{year}'].mean() for year in years]
+
+    # Get ITN data (may not exist for all years)
+    itn_years = []
+    itn_avg = []
+    for year in years:
+        col = f'itn_ownership_{year}'
+        if col in df.columns:
+            itn_years.append(year)
+            itn_avg.append(df[col].mean())
+
+    # Get IPTp data (may not exist for all years)
+    iptp_years = []
+    iptp_avg = []
+    for year in years:
+        col = f'iptp2_{year}'
+        if col in df.columns:
+            iptp_years.append(year)
+            iptp_avg.append(df[col].mean())
 
     fig = make_subplots(
         rows=1, cols=1,
@@ -1212,33 +1230,35 @@ def create_national_trends(data):
         secondary_y=False
     )
 
-    # ITN trace
-    fig.add_trace(
-        go.Scatter(
-            x=years,
-            y=itn_avg,
-            mode='lines+markers',
-            name='ITN Ownership',
-            line=dict(color='#2E7D32', width=3, dash='dash'),
-            marker=dict(size=10),
-            hovertemplate='Year: %{x}<br>ITN: %{y:.1f}%<extra></extra>'
-        ),
-        secondary_y=True
-    )
+    # ITN trace (if data available)
+    if len(itn_years) > 0:
+        fig.add_trace(
+            go.Scatter(
+                x=itn_years,
+                y=itn_avg,
+                mode='lines+markers',
+                name='ITN Ownership',
+                line=dict(color='#2E7D32', width=3, dash='dash'),
+                marker=dict(size=10),
+                hovertemplate='Year: %{x}<br>ITN: %{y:.1f}%<extra></extra>'
+            ),
+            secondary_y=True
+        )
 
-    # IPTp trace
-    fig.add_trace(
-        go.Scatter(
-            x=years,
-            y=iptp_avg,
-            mode='lines+markers',
-            name='IPTp2 Coverage',
-            line=dict(color='#1565C0', width=3, dash='dot'),
-            marker=dict(size=10),
-            hovertemplate='Year: %{x}<br>IPTp2: %{y:.1f}%<extra></extra>'
-        ),
-        secondary_y=True
-    )
+    # IPTp trace (if data available)
+    if len(iptp_years) > 0:
+        fig.add_trace(
+            go.Scatter(
+                x=iptp_years,
+                y=iptp_avg,
+                mode='lines+markers',
+                name='IPTp2 Coverage',
+                line=dict(color='#1565C0', width=3, dash='dot'),
+                marker=dict(size=10),
+                hovertemplate='Year: %{x}<br>IPTp2: %{y:.1f}%<extra></extra>'
+            ),
+            secondary_y=True
+        )
 
     fig.update_xaxes(title_text="Year", dtick=3)
     fig.update_yaxes(title_text="Malaria Prevalence (%)", secondary_y=False, range=[0, 30])
@@ -1442,24 +1462,32 @@ def create_counterfactual_dashboard(data):
 
     # Scenario 1: Universal ITN coverage (100%)
     X_itn = X.copy()
-    X_itn['itn_2021'] = 100
-    X_itn['itn_coverage_gap_2021'] = 0
+    if 'itn_ownership_2021' in X_itn.columns:
+        X_itn['itn_ownership_2021'] = 100
+    if 'itn_coverage_gap_2021' in X_itn.columns:
+        X_itn['itn_coverage_gap_2021'] = 0
     X_itn_scaled = data['scaler'].transform(X_itn)
     pred_itn = model.predict(X_itn_scaled)
 
     # Scenario 2: Universal IPTp coverage (100%)
     X_iptp = X.copy()
-    X_iptp['iptp2_2021'] = 100
-    X_iptp['iptp_coverage_gap_2021'] = 0
+    if 'iptp2_2021' in X_iptp.columns:
+        X_iptp['iptp2_2021'] = 100
+    if 'iptp_coverage_gap_2021' in X_iptp.columns:
+        X_iptp['iptp_coverage_gap_2021'] = 0
     X_iptp_scaled = data['scaler'].transform(X_iptp)
     pred_iptp = model.predict(X_iptp_scaled)
 
     # Scenario 3: Both interventions at 100%
     X_both = X.copy()
-    X_both['itn_2021'] = 100
-    X_both['itn_coverage_gap_2021'] = 0
-    X_both['iptp2_2021'] = 100
-    X_both['iptp_coverage_gap_2021'] = 0
+    if 'itn_ownership_2021' in X_both.columns:
+        X_both['itn_ownership_2021'] = 100
+    if 'itn_coverage_gap_2021' in X_both.columns:
+        X_both['itn_coverage_gap_2021'] = 0
+    if 'iptp2_2021' in X_both.columns:
+        X_both['iptp2_2021'] = 100
+    if 'iptp_coverage_gap_2021' in X_both.columns:
+        X_both['iptp_coverage_gap_2021'] = 0
     X_both_scaled = data['scaler'].transform(X_both)
     pred_both = model.predict(X_both_scaled)
 
@@ -1908,12 +1936,11 @@ def main():
     create_learning_curves(data)
     create_calibration_plots(data)
 
-    # Section B: Explainability (8 visualizations)
+    # Section B: Explainability (7 visualizations)
     print("\n" + "="*80)
-    print("SECTION B: EXPLAINABILITY (8 visualizations)")
+    print("SECTION B: EXPLAINABILITY (7 visualizations)")
     print("="*80)
     create_shap_summary_interactive(data)
-    create_shap_importance_bars(data)
     create_shap_dependence_plots(data)
     create_shap_waterfall_plot(data)
     create_shap_force_plot(data)
@@ -1963,11 +1990,11 @@ def main():
     print("✅ VISUALIZATION GENERATION COMPLETE!")
     print("="*80)
     print(f"\n📁 All visualizations saved to: {OUTPUT_DIR}/")
-    print(f"📊 Total visualizations created: 32")
+    print(f"📊 Total visualizations created: 31")
     print("\n🎓 Publication-ready interactive visualizations generated successfully!")
     print("\n📋 Summary:")
     print("   - Section A (Model Performance): 6 visualizations")
-    print("   - Section B (Explainability): 8 visualizations")
+    print("   - Section B (Explainability): 7 visualizations")
     print("   - Section C (Geospatial): 5 visualizations")
     print("   - Section D (Temporal Trends): 4 visualizations")
     print("   - Section E (Intervention Analysis): 5 visualizations")
