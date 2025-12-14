@@ -126,6 +126,14 @@ def load_data():
     """Load all datasets"""
     df = pd.read_csv('data/data_with_features.csv')
     predictions = pd.read_csv('data/model_predictions_2021.csv')
+
+    # Merge predictions into main dataframe
+    df = df.merge(
+        predictions[['State', 'risk_class_2021', 'predicted_prevalence', 'prediction_error']],
+        on='State',
+        how='left'
+    )
+
     return df, predictions
 
 @st.cache_resource
@@ -555,8 +563,89 @@ elif page == "📊 Data Explorer":
             st.image('visualizations/top10_high_risk_heatmap.png', use_container_width=True)
 
     elif viz_type == "Zone-Level Comparison":
-        if os.path.exists('visualizations/zone_level_comparative_analysis.png'):
-            st.image('visualizations/zone_level_comparative_analysis.png', use_container_width=True)
+        st.markdown("### 📊 Malaria Prevalence by Geopolitical Zone")
+
+        # Calculate zone statistics
+        zone_stats = df.groupby('Zone').agg({
+            'malaria_prev_2021': ['mean', 'min', 'max', 'count'],
+            'itn_ownership_2021': 'mean',
+            'iptp2_2021': 'mean'
+        }).round(1)
+
+        zone_stats.columns = ['Avg_Prevalence', 'Min_Prevalence', 'Max_Prevalence', 'State_Count', 'Avg_ITN', 'Avg_IPTp']
+        zone_stats = zone_stats.reset_index().sort_values('Avg_Prevalence', ascending=False)
+
+        # Create two columns for visualizations
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # Clean bar chart for prevalence
+            fig1 = go.Figure()
+
+            # Add bars with error ranges
+            fig1.add_trace(go.Bar(
+                x=zone_stats['Zone'],
+                y=zone_stats['Avg_Prevalence'],
+                name='Average Prevalence',
+                marker_color='#C62828',
+                error_y=dict(
+                    type='data',
+                    symmetric=False,
+                    array=zone_stats['Max_Prevalence'] - zone_stats['Avg_Prevalence'],
+                    arrayminus=zone_stats['Avg_Prevalence'] - zone_stats['Min_Prevalence']
+                ),
+                hovertemplate='<b>%{x}</b><br>Average: %{y:.1f}%<br><extra></extra>'
+            ))
+
+            fig1.update_layout(
+                title='Average Malaria Prevalence by Zone (2021)',
+                xaxis_title='Geopolitical Zone',
+                yaxis_title='Prevalence (%)',
+                template='plotly_white',
+                height=400,
+                showlegend=False,
+                xaxis_tickangle=-45
+            )
+
+            st.plotly_chart(fig1, use_container_width=True)
+
+        with col2:
+            # Grouped bar chart for interventions
+            fig2 = go.Figure()
+
+            fig2.add_trace(go.Bar(
+                name='ITN Ownership',
+                x=zone_stats['Zone'],
+                y=zone_stats['Avg_ITN'],
+                marker_color='#2E7D32',
+                hovertemplate='<b>%{x}</b><br>ITN: %{y:.1f}%<extra></extra>'
+            ))
+
+            fig2.add_trace(go.Bar(
+                name='IPTp Coverage',
+                x=zone_stats['Zone'],
+                y=zone_stats['Avg_IPTp'],
+                marker_color='#1976D2',
+                hovertemplate='<b>%{x}</b><br>IPTp: %{y:.1f}%<extra></extra>'
+            ))
+
+            fig2.update_layout(
+                title='Intervention Coverage by Zone (2021)',
+                xaxis_title='Geopolitical Zone',
+                yaxis_title='Coverage (%)',
+                template='plotly_white',
+                height=400,
+                barmode='group',
+                xaxis_tickangle=-45
+            )
+
+            st.plotly_chart(fig2, use_container_width=True)
+
+        # Add summary table
+        st.markdown("### 📋 Zone Statistics Summary")
+        summary_df = zone_stats.copy()
+        summary_df.columns = ['Zone', 'Avg Prevalence (%)', 'Min (%)', 'Max (%)', 'States', 'Avg ITN (%)', 'Avg IPTp (%)']
+        st.dataframe(summary_df, use_container_width=True, hide_index=True)
 
     elif viz_type == "Intervention Coverage":
         if os.path.exists('visualizations/intervention_recommendation_dashboard.png'):
@@ -790,6 +879,9 @@ elif page == "🔍 XAI Insights":
                         if os.path.exists('models/shap_values_corrected.npy'):
                             shap_values_high_risk = np.load('models/shap_values_corrected.npy')
                             base_value = np.load('models/shap_base_value_corrected.npy')
+                            # Ensure base_value is a scalar
+                            if isinstance(base_value, np.ndarray):
+                                base_value = float(base_value.item() if base_value.size == 1 else base_value.mean())
                         else:
                             shap_values = models['shap_explainer'].shap_values(X_scaled)
                             rf_classifier = models['rf_classifier']
@@ -807,17 +899,17 @@ elif page == "🔍 XAI Insights":
 
                         # Create the waterfall plot
                         st.set_option('deprecation.showPyplotGlobalUse', False)
-                        fig, ax = plt.subplots(figsize=(12, 8))
 
                         explanation = shap.Explanation(
                             values=shap_values_high_risk[state_index],
-                            base_values=base_value,
+                            base_values=float(base_value),
                             data=X_scaled[state_index],
                             feature_names=feature_cols
                         )
 
-                        shap.waterfall_plot(explanation, show=False)
-                        st.pyplot(fig)
+                        # waterfall_plot creates its own figure
+                        shap.waterfall_plot(explanation, max_display=15, show=False)
+                        st.pyplot(plt.gcf(), clear_figure=True)
                         plt.close()
                     except Exception as e:
                         st.error(f"Error generating waterfall plot: {e}")
@@ -942,7 +1034,7 @@ elif page == "🎯 Risk Predictor":
             with col1:
                 st.metric(
                     label="Predicted Risk Category",
-                    value=state_data['risk_category'] if 'risk_category' in state_data else
+                    value=state_data['risk_class_2021'] if 'risk_class_2021' in state_data else
                           classify_risk(state_data['malaria_prev_2021'])
                 )
 
