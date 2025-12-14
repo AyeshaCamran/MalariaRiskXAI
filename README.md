@@ -169,16 +169,22 @@ python train_all_models_corrected.py
 # Regenerate SHAP analysis
 python regenerate_shap_corrected.py
 
-# Generate visualizations
-python generate_visualizations.py
+# Generate all 32 publication-ready visualizations
+python visualizations_comprehensive.py
+
+# Launch interactive dashboard
+python dashboard_app.py
 ```
 
 ---
 
 ## 📖 Documentation
 
+- **[README.md](README.md)** - Project overview (this file)
 - **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deploy to Streamlit Cloud
 - **[TECHNICAL_REPORT.md](TECHNICAL_REPORT.md)** - Complete technical documentation
+- **[VISUALIZATION_GUIDE.md](VISUALIZATION_GUIDE.md)** - Comprehensive visualization suite guide
+- **[VISUALIZATION_SUITE_SUMMARY.md](VISUALIZATION_SUITE_SUMMARY.md)** - Visualization implementation summary
 
 ---
 

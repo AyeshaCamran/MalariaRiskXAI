@@ -9,3 +9,9 @@ Pillow>=10.0.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
 xgboost>=2.0.0
+
+# Visualization Suite Dependencies
+kaleido>=0.2.1
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+gunicorn>=21.2.0
